@@ -55,8 +55,7 @@ UI = {
         "spinner_analyze":  "Reading between his lines...",
         "error_no_input":   "Paste his message or upload a screenshot first.",
         "tactic_label":     "🎯 WHAT HE JUST DID",
-        "legal_yes_label":  "⚖️ LEGAL FLAG - DOCUMENT THIS",
-        "legal_no_label":   "⚖️ LEGAL FLAG",
+        "save_label":       "📸 DOCUMENT THIS - worth saving a screenshot",
         "r1_label":         "🔥 WHAT YOU REALLY WANT TO SAY - do not send",
         "r2_label":         "💙 WHAT TO ACTUALLY SEND",
         "copy_label":       "Copy to send:",
@@ -102,8 +101,9 @@ UI = {
         "export_btn":       "⬇️ Export Full Log (for your attorney)",
         "log_his_msg":      "His message:",
         "log_tactic":       "Tactic:",
-        "log_legal":        "Legal flag:",
+        "log_save":         "Saved for records:",
         "log_sent":         "What she sent:",
+        "disclaimer":       "This app is for emotional support only. It is not legal advice and is not a substitute for a licensed attorney.",
         "lang_label":       "Language / Idioma",
     },
     "es": {
@@ -124,8 +124,7 @@ UI = {
         "spinner_analyze":  "Leyendo entre sus lineas...",
         "error_no_input":   "Pega su mensaje o sube una captura primero.",
         "tactic_label":     "🎯 LO QUE ACABA DE HACER",
-        "legal_yes_label":  "⚖️ ALERTA LEGAL - DOCUMENTA ESTO",
-        "legal_no_label":   "⚖️ ALERTA LEGAL",
+        "save_label":       "📸 GUARDA ESTO - vale la pena tomar una captura",
         "r1_label":         "🔥 LO QUE REALMENTE QUIERES DECIR - no lo envies",
         "r2_label":         "💙 LO QUE DEBES ENVIAR",
         "copy_label":       "Copia para enviar:",
@@ -171,8 +170,9 @@ UI = {
         "export_btn":       "⬇️ Exportar Registro Completo (para tu abogada)",
         "log_his_msg":      "Su mensaje:",
         "log_tactic":       "Tactica:",
-        "log_legal":        "Alerta legal:",
+        "log_save":         "Guardado:",
         "log_sent":         "Lo que envio:",
+        "disclaimer":       "Esta aplicacion es solo para apoyo emocional. No es asesoramiento legal y no sustituye a un abogado con licencia.",
         "lang_label":       "Language / Idioma",
     }
 }
@@ -220,8 +220,8 @@ When given a message from Erick, respond in EXACTLY this format using these exac
 ===TACTIC===
 [One sharp sentence naming the exact manipulation tactic he just used.]
 
-===LEGAL===
-[Start with YES or NO on the first line. If YES: explain what this message demonstrates legally and what Laura should do. If NO: write exactly "Nothing to flag legally." (or the Spanish equivalent if responding in Spanish).]
+===SAVE===
+[YES or NO on the first line. If YES: in 1-2 sentences explain why this message is worth screenshotting and keeping for personal records - e.g. it contains a threat, a false accusation, or a clear behavioral pattern worth remembering. No legal language whatsoever. If NO: write "Nothing to save."]
 
 ===RESPONSE1===
 [The cathartic response she wishes she could send - for her eyes only, not to send. Name his tactic. Call out the insecurity and projection. Reference his actual track record. Sharp, satisfying, vindicating. Written as Laura speaking in first person.]
@@ -278,7 +278,7 @@ def parse_analysis(raw):
         return raw[start:next_marker].strip() if next_marker != -1 else raw[start:].strip()
     return {
         "tactic": extract("TACTIC"),
-        "legal":  extract("LEGAL"),
+        "save":   extract("SAVE"),
         "r1":     extract("RESPONSE1"),
         "r2":     extract("RESPONSE2"),
     }
@@ -302,7 +302,8 @@ def export_log(log):
         lines.append(f"Entry {i} - {e.get('timestamp','')}")
         lines.append(f"\nHIS MESSAGE:\n{e.get('message','')}")
         lines.append(f"\nTACTIC: {e.get('tactic','')}")
-        lines.append(f"\nLEGAL FLAG:\n{e.get('legal','')}")
+        if e.get("save","").upper().startswith("YES"):
+            lines.append(f"\nFLAGGED TO SAVE:\n{e.get('save','')}")
         lines.append(f"\nWHAT SHE WANTED TO SAY:\n{e.get('r1','')}")
         lines.append(f"\nWHAT SHE SENT:\n{e.get('r2','')}")
         lines.append("")
@@ -417,6 +418,7 @@ lang = st.session_state.lang
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("<h1 style='text-align:center;'>🙄 Fuck This Guy</h1>", unsafe_allow_html=True)
 st.markdown(f"<div class='subtitle'>{t('subtitle')}</div>", unsafe_allow_html=True)
+st.caption(t("disclaimer"))
 st.divider()
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -464,14 +466,9 @@ with tab_main:
                     st.markdown(f"<div class='label-tag' style='color:#f39c12;'>{t('tactic_label')}</div>", unsafe_allow_html=True)
                     st.markdown(f"<div class='tactic-box'>{parsed['tactic']}</div>", unsafe_allow_html=True)
 
-                    legal_text = parsed["legal"]
-                    is_legal_yes = legal_text.upper().startswith("YES") or legal_text.upper().startswith("SI")
-                    if is_legal_yes:
-                        st.markdown(f"<div class='label-tag' style='color:#e74c3c;'>{t('legal_yes_label')}</div>", unsafe_allow_html=True)
-                        st.markdown(f"<div class='legal-yes'>{legal_text}</div>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<div class='label-tag' style='color:#27ae60;'>{t('legal_no_label')}</div>", unsafe_allow_html=True)
-                        st.markdown(f"<div class='legal-no'>{legal_text}</div>", unsafe_allow_html=True)
+                    if parsed["save"].upper().startswith("YES"):
+                        st.markdown(f"<div class='label-tag' style='color:#f39c12;'>{t('save_label')}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='tactic-box'>{parsed['save']}</div>", unsafe_allow_html=True)
 
                     st.markdown(f"<div class='label-tag' style='color:#c0392b;'>{t('r1_label')}</div>", unsafe_allow_html=True)
                     st.markdown(f"<div class='box-fire'>{parsed['r1'].replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
@@ -491,7 +488,7 @@ with tab_main:
                         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
                         "message": message_text_input if has_text else "[screenshot]",
                         "tactic": parsed["tactic"],
-                        "legal": parsed["legal"],
+                        "save": parsed["save"],
                         "r1": parsed["r1"],
                         "r2": parsed["r2"],
                     })
@@ -546,7 +543,7 @@ with tab_log:
             with st.expander(f"📅 {entry.get('timestamp','')} - {entry.get('tactic','')[:60]}..."):
                 st.markdown(f"**{t('log_his_msg')}** {entry.get('message','')}")
                 st.markdown(f"**{t('log_tactic')}** {entry.get('tactic','')}")
-                legal = entry.get("legal", "")
-                if legal.upper().startswith("YES") or legal.upper().startswith("SI"):
-                    st.markdown(f"**⚖️ {t('log_legal')}** {legal}")
+                saved = entry.get("save", "")
+                if saved.upper().startswith("YES"):
+                    st.markdown(f"**📸 {t('log_save')}** {saved}")
                 st.markdown(f"**{t('log_sent')}** {entry.get('r2','')}")
